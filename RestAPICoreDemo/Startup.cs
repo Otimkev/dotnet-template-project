@@ -29,7 +29,7 @@ namespace RestAPICoreDemo
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()
-                    .WithOrigins("http://localhost:8080");
+                    .WithOrigins("https://front-end-wa.azurewebsites.net");
                 });
             });
             services.AddControllers();
