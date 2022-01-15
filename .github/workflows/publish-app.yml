@@ -37,7 +37,6 @@ jobs:
         package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}'
 
     - name: Publish Artifacts
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v2
       with:
-        name: myartifact
-        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH}}
+        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
