@@ -1,35 +1,45 @@
-name: publish
+name: Dotnet Build-Test-MSDeploy your project
 
 on:
   push:
-    branches: [ main ]
-
-env:
-  AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-  AZURE_WEBAPP_PACKAGE_PATH: './publishing-package' # Set this to the path to your web app project, defaults to the repository root:
-  DOTNET_VERSION: '3.1.103' # The .NET SDK version to use
+    branches: [ master ]
 
 jobs:
-  publish:
 
-    runs-on: self-hosted
+  Build-Test-Deploy:
+    runs-on: windows-latest
+    env:
+      PROJECT_DIRECTORY_PATH: "RestAPICoreDemo"
+      IIS_SERVER_COMPUTER_NAME: 52.188.9.113
+      IIS_WEBSITE_NAME: Sample
+      IIS_SERVER_USERNAME: webdeploy
+      IIS_SERVER_PASSWORD: mangoes@123
+      RECYCLE_APP_NAME: Sample
+      WEBSITE_CONTENT_PATH: Sample
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup .NET Core ${{ env.DOTNET_VERSION}}
+
+    - name: Checking environment...
+      uses: RahulParmarRP/dotnet-build-test-msdeploy@master
+
+    - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
-    - name: Install dependencies and restore
-      run: dotnet restore
-      
-    - name: Build
-      run: |
-        dotnet build --configuration Release --no-restore
-        dotnet publish -c Release -o ${{ env.AZURE_WEBAPP_PACKAGE_PATH}} --no-build
-
-    - name: Publish Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        dotnet-version: 3.1.101
+        
+    - name: Build with dotnet
+      run: dotnet publish
+           ${{ env.PROJECT_DIRECTORY_PATH }}/${{ env.PROJECT_DIRECTORY_PATH }}.csproj
+           --source https://api.nuget.org/v3/index.json
+           --configuration Release
+    
+    - name: Stop Application Pool
+      shell: cmd
+      run: '"C:/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe" -verb:sync -allowUntrusted -source:recycleApp -dest:recycleApp="${{ env.RECYCLE_APP_NAME }}",recycleMode="StopAppPool",computerName="${{ env.IIS_SERVER_COMPUTER_NAME }}/msdeploy.axd?site=${{ env.IIS_WEBSITE_NAME }}",username="${{ env.IIS_SERVER_USERNAME }}",password="${{ env.IIS_SERVER_PASSWORD }}",AuthType="Basic"'
+    - name: Deploy Application
+      shell: cmd
+      run: '"C:/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe" -verb:sync -allowUntrusted -source:contentPath="%CD%\${{ env.PROJECT_DIRECTORY_PATH }}\bin\Release\netcoreapp3.1\" -dest:contentPath="${{ env.WEBSITE_CONTENT_PATH }}",computerName="${{ env.IIS_SERVER_COMPUTER_NAME }}/msdeploy.axd?site=${{ env.IIS_WEBSITE_NAME }}",username="${{ env.IIS_SERVER_USERNAME }}",password="${{ env.IIS_SERVER_PASSWORD }}",authtype="Basic"'
+    - name: Start Application Pool
+      shell: cmd
+      run: '"C:/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe" -verb:sync -allowUntrusted -source:recycleApp -dest:recycleApp="${{ env.RECYCLE_APP_NAME }}",recycleMode="StartAppPool",computerName="${{ env.IIS_SERVER_COMPUTER_NAME }}/msdeploy.axd?site=${{ env.IIS_WEBSITE_NAME }}",username="${{ env.IIS_SERVER_USERNAME }}",password="${{ env.IIS_SERVER_PASSWORD }}",AuthType="Basic"'   
