@@ -2,12 +2,12 @@ name: Dotnet Build-Test-MSDeploy your project
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
 
   Build-Test-Deploy:
-    runs-on: windows-latest
+    runs-on: self-hosted
     env:
       PROJECT_DIRECTORY_PATH: "RestAPICoreDemo"
       IIS_SERVER_COMPUTER_NAME: 52.188.9.113
